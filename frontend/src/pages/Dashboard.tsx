@@ -1,28 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Grid, Paper, Typography } from '@mui/material';
 import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import { Chart } from 'chart.js';
+import 'chart.js/auto';
 import axios from 'axios';
 import { MarketData } from '../types';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
 
 const Dashboard: React.FC = () => {
   const [marketData, setMarketData] = useState<MarketData | null>(null);
