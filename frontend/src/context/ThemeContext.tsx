@@ -32,16 +32,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           mode,
           ...(mode === 'light'
             ? {
-                // Light theme colors
+                // Purple gradient light theme
                 primary: {
-                  main: '#1976d2',
+                  main: '#6a1b9a',
+                  light: '#9c4dcc',
+                  dark: '#38006b',
                 },
                 secondary: {
-                  main: '#dc004e',
+                  main: '#7b1fa2',
+                  light: '#ae52d4',
+                  dark: '#4a0072',
                 },
                 background: {
-                  default: '#f5f5f5',
+                  default: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
                   paper: '#ffffff',
+                },
+                text: {
+                  primary: '#2c003e',
+                  secondary: '#4a0072',
                 },
               }
             : {
@@ -57,6 +65,26 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   paper: '#1e1e1e',
                 },
               }),
+        },
+        components: {
+          MuiCssBaseline: {
+            styleOverrides: {
+              body: {
+                background: mode === 'light' 
+                  ? 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)'
+                  : '#121212',
+                backgroundAttachment: 'fixed',
+                minHeight: '100vh',
+              },
+            },
+          },
+          MuiPaper: {
+            styleOverrides: {
+              root: {
+                backgroundImage: mode === 'light' ? 'none' : undefined,
+              },
+            },
+          },
         },
       }),
     [mode]
