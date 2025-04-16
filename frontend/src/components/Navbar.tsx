@@ -1,18 +1,23 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, IconButton, Box } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import BuildIcon from '@mui/icons-material/Build';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { useTheme } from '../context/ThemeContext';
 
 const Navbar: React.FC = () => {
+  const { toggleTheme, mode } = useTheme();
+
   return (
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           AlgoBlocks
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Button
             color="inherit"
             component={RouterLink}
@@ -37,6 +42,9 @@ const Navbar: React.FC = () => {
           >
             Backtesting
           </Button>
+          <IconButton onClick={toggleTheme} color="inherit">
+            {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
         </Box>
       </Toolbar>
     </AppBar>
