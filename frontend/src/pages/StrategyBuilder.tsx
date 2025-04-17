@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -15,12 +15,16 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided } from 'react-beautiful-dnd';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ErrorIcon from '@mui/icons-material/Error';
 import { useTheme } from '../context/ThemeContext';
+import { useNavigate } from 'react-router-dom';
 
 type BlockType = 'indicator' | 'condition' | 'action';
 
@@ -31,11 +35,21 @@ interface StrategyBlock {
   params: Record<string, any>;
 }
 
+interface ValidationError {
+  blockId: string;
+  message: string;
+}
+
 const StrategyBuilder: React.FC = () => {
   const { mode } = useTheme();
+  const navigate = useNavigate();
   const [blocks, setBlocks] = useState<StrategyBlock[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<StrategyBlock | null>(null);
   const [openConfig, setOpenConfig] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [showError, setShowError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const availableBlocks: StrategyBlock[] = [
     { id: 'sma', type: 'indicator', name: 'Simple Moving Average', params: { period: 20 } },
@@ -100,7 +114,69 @@ const StrategyBuilder: React.FC = () => {
     }
   };
 
+  const validateStrategy = (): ValidationError[] => {
+    const errors: ValidationError[] = [];
+
+    // Check if there are any blocks
+    if (blocks.length === 0) {
+      errors.push({ blockId: '', message: 'Strategy must contain at least one block' });
+      return errors;
+    }
+
+    // Validate each block
+    blocks.forEach((block, index) => {
+      // Check if indicator parameters are valid
+      if (block.type === 'indicator') {
+        if (block.params.period <= 0) {
+          errors.push({ blockId: block.id, message: `${block.name} period must be greater than 0` });
+        }
+      }
+
+      // Check if condition parameters are valid
+      if (block.type === 'condition') {
+        if (block.name.includes('Cross')) {
+          if (!block.params.indicator1 || !block.params.indicator2) {
+            errors.push({ blockId: block.id, message: `${block.name} requires two indicators to be selected` });
+          }
+        } else {
+          if (block.params.value === undefined || block.params.value === '') {
+            errors.push({ blockId: block.id, message: `${block.name} requires a value to be set` });
+          }
+        }
+      }
+
+      // Check if action parameters are valid
+      if (block.type === 'action') {
+        if (block.params.quantity <= 0) {
+          errors.push({ blockId: block.id, message: `${block.name} quantity must be greater than 0` });
+        }
+      }
+
+      // Check block sequence
+      if (index > 0) {
+        const prevBlock = blocks[index - 1];
+        if (block.type === 'action' && prevBlock.type !== 'condition') {
+          errors.push({ blockId: block.id, message: 'Actions must follow conditions' });
+        }
+      }
+    });
+
+    return errors;
+  };
+
+  useEffect(() => {
+    const errors = validateStrategy();
+    setValidationErrors(errors);
+  }, [blocks]);
+
   const saveStrategy = async () => {
+    const errors = validateStrategy();
+    if (errors.length > 0) {
+      setShowError(true);
+      return;
+    }
+
+    setIsSaving(true);
     try {
       const response = await fetch('http://localhost:5000/api/strategies', {
         method: 'POST',
@@ -121,8 +197,19 @@ const StrategyBuilder: React.FC = () => {
 
       const savedStrategy = await response.json();
       console.log('Strategy saved:', savedStrategy);
+      
+      // Show success message
+      setShowSuccess(true);
+      
+      // Navigate to dashboard after 2 seconds
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
     } catch (error) {
       console.error('Error saving strategy:', error);
+      setShowError(true);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -162,6 +249,10 @@ const StrategyBuilder: React.FC = () => {
         </DialogActions>
       </Dialog>
     );
+  };
+
+  const getBlockError = (blockId: string): string | undefined => {
+    return validationErrors.find(error => error.blockId === blockId)?.message;
   };
 
   return (
@@ -208,8 +299,9 @@ const StrategyBuilder: React.FC = () => {
                 color="primary"
                 startIcon={<AddIcon />}
                 onClick={saveStrategy}
+                disabled={validationErrors.length > 0 || isSaving}
               >
-                Save Strategy
+                {isSaving ? 'Saving...' : 'Save Strategy'}
               </Button>
             </Box>
             <Divider sx={{ my: 2 }} />
@@ -221,43 +313,57 @@ const StrategyBuilder: React.FC = () => {
                     ref={provided.innerRef}
                     sx={{ minHeight: '400px' }}
                   >
-                    {blocks.map((block, index) => (
-                      <Draggable key={block.id} draggableId={block.id} index={index}>
-                        {(provided: DraggableProvided) => (
-                          <Card
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            sx={{ mb: 1 }}
-                          >
-                            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <Box>
-                                <Typography variant="body1">{block.name}</Typography>
-                                <Typography variant="caption" color="textSecondary">
-                                  {block.type}
-                                </Typography>
-                              </Box>
-                              <Box>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => openBlockConfig(block)}
-                                  sx={{ mr: 1 }}
-                                >
-                                  <SettingsIcon />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => removeBlock(index)}
-                                  sx={{ color: 'error.main' }}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </Draggable>
-                    ))}
+                    {blocks.map((block, index) => {
+                      const error = getBlockError(block.id);
+                      return (
+                        <Draggable key={block.id} draggableId={block.id} index={index}>
+                          {(provided: DraggableProvided) => (
+                            <Card
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              sx={{ 
+                                mb: 1,
+                                border: error ? '1px solid red' : 'none',
+                              }}
+                            >
+                              <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Box>
+                                  <Typography variant="body1">{block.name}</Typography>
+                                  <Typography variant="caption" color="textSecondary">
+                                    {block.type}
+                                  </Typography>
+                                  {error && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                      <ErrorIcon color="error" sx={{ fontSize: 16, mr: 0.5 }} />
+                                      <Typography variant="caption" color="error">
+                                        {error}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Box>
+                                <Box>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => openBlockConfig(block)}
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <SettingsIcon />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => removeBlock(index)}
+                                    sx={{ color: 'error.main' }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Box>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </Draggable>
+                      );
+                    })}
                     {provided.placeholder}
                   </Box>
                 )}
@@ -267,6 +373,24 @@ const StrategyBuilder: React.FC = () => {
         </Grid>
       </Grid>
       {renderConfigDialog()}
+      <Snackbar
+        open={showError}
+        autoHideDuration={6000}
+        onClose={() => setShowError(false)}
+      >
+        <Alert severity="error" onClose={() => setShowError(false)}>
+          Please fix all validation errors before saving the strategy
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={showSuccess}
+        autoHideDuration={2000}
+        onClose={() => setShowSuccess(false)}
+      >
+        <Alert severity="success" onClose={() => setShowSuccess(false)}>
+          Strategy saved successfully! Redirecting to dashboard...
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
