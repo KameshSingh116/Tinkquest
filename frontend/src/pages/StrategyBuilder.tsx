@@ -9,10 +9,17 @@ import {
   IconButton,
   Divider,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
 } from '@mui/material';
 import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided } from 'react-beautiful-dnd';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useTheme } from '../context/ThemeContext';
 
 type BlockType = 'indicator' | 'condition' | 'action';
@@ -27,6 +34,8 @@ interface StrategyBlock {
 const StrategyBuilder: React.FC = () => {
   const { mode } = useTheme();
   const [blocks, setBlocks] = useState<StrategyBlock[]>([]);
+  const [selectedBlock, setSelectedBlock] = useState<StrategyBlock | null>(null);
+  const [openConfig, setOpenConfig] = useState(false);
 
   const availableBlocks: StrategyBlock[] = [
     { id: 'sma', type: 'indicator', name: 'Simple Moving Average', params: { period: 20 } },
@@ -59,6 +68,38 @@ const StrategyBuilder: React.FC = () => {
     setBlocks(newBlocks);
   };
 
+  const openBlockConfig = (block: StrategyBlock) => {
+    setSelectedBlock(block);
+    setOpenConfig(true);
+  };
+
+  const handleConfigClose = () => {
+    setOpenConfig(false);
+    setSelectedBlock(null);
+  };
+
+  const handleConfigSave = () => {
+    if (selectedBlock) {
+      const updatedBlocks = blocks.map(block => 
+        block.id === selectedBlock.id ? selectedBlock : block
+      );
+      setBlocks(updatedBlocks);
+    }
+    handleConfigClose();
+  };
+
+  const handleParamChange = (param: string, value: any) => {
+    if (selectedBlock) {
+      setSelectedBlock({
+        ...selectedBlock,
+        params: {
+          ...selectedBlock.params,
+          [param]: value
+        }
+      });
+    }
+  };
+
   const saveStrategy = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/strategies', {
@@ -83,6 +124,44 @@ const StrategyBuilder: React.FC = () => {
     } catch (error) {
       console.error('Error saving strategy:', error);
     }
+  };
+
+  const renderConfigDialog = () => {
+    if (!selectedBlock) return null;
+
+    return (
+      <Dialog open={openConfig} onClose={handleConfigClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Configure {selectedBlock.name}</DialogTitle>
+        <DialogContent>
+          {Object.entries(selectedBlock.params).map(([key, value]) => (
+            <TextField
+              key={key}
+              margin="dense"
+              label={key.charAt(0).toUpperCase() + key.slice(1)}
+              type={typeof value === 'number' ? 'number' : 'text'}
+              fullWidth
+              value={value}
+              onChange={(e) => handleParamChange(key, e.target.value)}
+              select={key.includes('indicator')}
+            >
+              {key.includes('indicator') && blocks
+                .filter(b => b.type === 'indicator')
+                .map(b => (
+                  <MenuItem key={b.id} value={b.id}>
+                    {b.name}
+                  </MenuItem>
+                ))}
+            </TextField>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConfigClose}>Cancel</Button>
+          <Button onClick={handleConfigSave} variant="contained" color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
   };
 
   return (
@@ -158,13 +237,22 @@ const StrategyBuilder: React.FC = () => {
                                   {block.type}
                                 </Typography>
                               </Box>
-                              <IconButton
-                                size="small"
-                                onClick={() => removeBlock(index)}
-                                sx={{ color: 'error.main' }}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
+                              <Box>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => openBlockConfig(block)}
+                                  sx={{ mr: 1 }}
+                                >
+                                  <SettingsIcon />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => removeBlock(index)}
+                                  sx={{ color: 'error.main' }}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Box>
                             </CardContent>
                           </Card>
                         )}
@@ -178,6 +266,7 @@ const StrategyBuilder: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
+      {renderConfigDialog()}
     </Box>
   );
 };
