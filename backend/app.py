@@ -12,7 +12,7 @@ CORS(app)
 # Basic configuration
 app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this in production
 
-# In-memory storage for portfolio and trades
+# In-memory storage for portfolio, trades, and strategies
 portfolio = {
     'total_value': 100000,
     'daily_change': 1500,
@@ -53,6 +53,8 @@ trades = [
         'timestamp': '2024-03-20T11:15:00Z'
     }
 ]
+
+strategies = []
 
 @app.route('/api/market-data/<symbol>', methods=['GET'])
 def get_market_data(symbol):
@@ -148,6 +150,22 @@ def add_trade():
         update_portfolio(trade)
         
         return jsonify(trade), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/strategies', methods=['GET'])
+def get_strategies():
+    return jsonify(strategies)
+
+@app.route('/api/strategies', methods=['POST'])
+def save_strategy():
+    try:
+        strategy = request.json
+        strategy['id'] = str(len(strategies) + 1)
+        strategy['created'] = datetime.now().isoformat()
+        strategy['lastModified'] = datetime.now().isoformat()
+        strategies.append(strategy)
+        return jsonify(strategy), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
