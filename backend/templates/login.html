@@ -2,21 +2,60 @@
 <html lang="en">
 <head>
     <title>Login</title>
-    <meta name="description" content="Login page for TinkerQuest application.">
-    <meta name="keywords" content="login, TinkerQuest, user authentication">
+    <meta name="description" content="Login to access your account on TinkerQuest.">
+    <meta name="keywords" content="login, TinkerQuest, user access, authentication">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+            padding: 50px;
+        }
+        form {
+            display: inline-block;
+            text-align: left;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #6c63ff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5753c9;
+        }
+    </style>
 </head>
 <body>
     <h1>Login</h1>
     <form method="post">
         <label>Username:</label>
         <input type="text" name="username" required>
-        <br>
         <label>Password:</label>
         <input type="password" name="password" required>
-        <br>
         <label>Special Phrase:</label>
         <input type="text" name="special_phrase" required>
-        <br>
         <button type="submit">Login</button>
     </form>
 </body>

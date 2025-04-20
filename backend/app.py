@@ -69,10 +69,92 @@ def generate_special_phrase():
 
 @app.route('/')
 def home():
-    return '''
-    <h1>Welcome to TinkerQuest</h1>
-    <p><a href="/register">Register</a> | <a href="/login">Login</a></p>
-    '''
+    if 'username' in session:
+        # User is logged in, show the main page
+        return '''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <title>Main Page</title>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f9;
+                    color: #333;
+                    text-align: center;
+                    padding: 50px;
+                }}
+                .button {{
+                    display: inline-block;
+                    margin: 10px;
+                    padding: 15px 30px;
+                    font-size: 16px;
+                    color: #fff;
+                    background-color: #6c63ff;
+                    border: none;
+                    border-radius: 5px;
+                    text-decoration: none;
+                    cursor: pointer;
+                }}
+                .button:hover {{
+                    background-color: #5753c9;
+                }}
+            </style>
+        </head>
+        <body>
+            <h1>Welcome, {username}</h1>
+            <p>This is the main page of the app.</p>
+            <a href="/logout" class="button">Logout</a>
+        </body>
+        </html>
+        '''.format(username=session.get('username', 'User'))  # Use session.get() to avoid KeyError
+    else:
+        # User is not logged in, show login and register options side by side
+        return '''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <title>Welcome to TinkerQuest</title>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f9;
+                    color: #333;
+                    text-align: center;
+                    padding: 50px;
+                }}
+                .container {{
+                    display: flex;
+                    justify-content: center;
+                    gap: 20px;
+                    margin-top: 50px;
+                }}
+                .button {{
+                    display: inline-block;
+                    padding: 15px 30px;
+                    font-size: 16px;
+                    color: #fff;
+                    background-color: #6c63ff;
+                    border: none;
+                    border-radius: 5px;
+                    text-decoration: none;
+                    cursor: pointer;
+                }}
+                .button:hover {{
+                    background-color: #5753c9;
+                }}
+            </style>
+        </head>
+        <body>
+            <h1>Welcome to TinkerQuest</h1>
+            <p>Access exclusive features by registering or logging in.</p>
+            <div class="container">
+                <a href="/register" class="button">Register</a>
+                <a href="/login" class="button">Login</a>
+            </div>
+        </body>
+        </html>
+        '''
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -86,11 +168,21 @@ def register():
         special_phrase = generate_special_phrase()
         users[username] = {'password': password, 'special_phrase': special_phrase}
         
-        # Return the special phrase to the user (do not save it anywhere else)
-        return jsonify({
-            'message': 'Registration successful! Please save your special phrase securely.',
-            'special_phrase': special_phrase
-        }), 201
+        # Inform the user to save their special phrase
+        return '''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <title>Registration Successful</title>
+        </head>
+        <body>
+            <h1>Registration Successful!</h1>
+            <p>Your special phrase is: <strong>{}</strong></p>
+            <p>Please save this phrase securely as it will not be shown again.</p>
+            <a href="/login">Go to Login</a>
+        </body>
+        </html>
+        '''.format(special_phrase)
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -104,7 +196,7 @@ def login():
         if username in users and users[username]['password'] == password:
             if users[username]['special_phrase'] == special_phrase:
                 session['username'] = username
-                return jsonify({'message': 'Login successful!'}), 200
+                return redirect(url_for('home'))  # Redirect to the main page
             return jsonify({'error': 'Invalid special phrase!'}), 401
         return jsonify({'error': 'Invalid credentials!'}), 401
     return render_template('login.html')
@@ -115,7 +207,7 @@ def special_feature():
         return redirect(url_for('login'))
     if request.method == 'POST':
         phrase = request.form['phrase']
-        if phrase == SPECIAL_PHRASE:
+        if phrase == users[session['username']]['special_phrase']:
             return jsonify({'message': 'Access granted to the special feature!'}), 200
         return jsonify({'error': 'Incorrect phrase!'}), 403
     return render_template('special_feature.html')
@@ -123,7 +215,7 @@ def special_feature():
 @app.route('/logout')
 def logout():
     session.pop('username', None)
-    return jsonify({'message': 'Logged out successfully!'}), 200
+    return redirect(url_for('login'))
 
 @app.route('/api/market-data/<symbol>', methods=['GET'])
 def get_market_data(symbol):
