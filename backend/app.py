@@ -5,6 +5,8 @@ import pandas as pd
 from datetime import datetime, timedelta
 import json
 import os
+import random
+import string
 
 app = Flask(__name__)
 CORS(app)
@@ -60,8 +62,10 @@ strategies = []
 # In-memory user storage (replace with a database in production)
 users = {}
 
-# Special phrase for accessing the feature
-SPECIAL_PHRASE = "TinkerQuest2025"
+# Function to generate a random special phrase
+def generate_special_phrase():
+    words = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa']
+    return ' '.join(random.sample(words, 4))  # Generate a 4-word phrase
 
 @app.route('/')
 def home():
@@ -77,8 +81,16 @@ def register():
         password = request.form['password']
         if username in users:
             return jsonify({'error': 'User already exists!'}), 400
-        users[username] = password
-        return jsonify({'message': 'Registration successful!'}), 201
+        
+        # Generate a special phrase for the user
+        special_phrase = generate_special_phrase()
+        users[username] = {'password': password, 'special_phrase': special_phrase}
+        
+        # Return the special phrase to the user (do not save it anywhere else)
+        return jsonify({
+            'message': 'Registration successful! Please save your special phrase securely.',
+            'special_phrase': special_phrase
+        }), 201
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -86,9 +98,14 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username in users and users[username] == password:
-            session['username'] = username
-            return jsonify({'message': 'Login successful!'}), 200
+        special_phrase = request.form['special_phrase']
+        
+        # Validate username, password, and special phrase
+        if username in users and users[username]['password'] == password:
+            if users[username]['special_phrase'] == special_phrase:
+                session['username'] = username
+                return jsonify({'message': 'Login successful!'}), 200
+            return jsonify({'error': 'Invalid special phrase!'}), 401
         return jsonify({'error': 'Invalid credentials!'}), 401
     return render_template('login.html')
 

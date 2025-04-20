@@ -67,6 +67,24 @@ npm start
 
 3. Open your browser and navigate to `http://localhost:3000`
 
+## How to Access the Application
+
+1. **Home Page**  
+   - URL: [http://127.0.0.1:5000/](http://127.0.0.1:5000/)  
+   - Description: The home page provides links to the registration and login pages.
+
+2. **Registration Page**  
+   - URL: [http://127.0.0.1:5000/register](http://127.0.0.1:5000/register)  
+   - Description: Use this page to register a new user by providing a username and password.
+
+3. **Login Page**  
+   - URL: [http://127.0.0.1:5000/login](http://127.0.0.1:5000/login)  
+   - Description: Use this page to log in with your registered credentials.
+
+4. **Special Feature Page**  
+   - URL: [http://127.0.0.1:5000/special-feature](http://127.0.0.1:5000/special-feature)  
+   - Description: After logging in, access this page to enter the special phrase (`TinkerQuest2025`) and unlock the special feature.
+
 ## Project Structure
 
 ```
