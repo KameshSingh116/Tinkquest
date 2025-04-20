@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session, redirect, url_for, render_template
 from flask_cors import CORS
 import yfinance as yf
 import pandas as pd
@@ -11,6 +11,7 @@ CORS(app)
 
 # Basic configuration
 app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this in production
+app.secret_key = 'your-secret-key-here'  # Change this in production
 
 # In-memory storage for portfolio, trades, and strategies
 portfolio = {
@@ -55,6 +56,57 @@ trades = [
 ]
 
 strategies = []
+
+# In-memory user storage (replace with a database in production)
+users = {}
+
+# Special phrase for accessing the feature
+SPECIAL_PHRASE = "TinkerQuest2025"
+
+@app.route('/')
+def home():
+    return '''
+    <h1>Welcome to TinkerQuest</h1>
+    <p><a href="/register">Register</a> | <a href="/login">Login</a></p>
+    '''
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username in users:
+            return jsonify({'error': 'User already exists!'}), 400
+        users[username] = password
+        return jsonify({'message': 'Registration successful!'}), 201
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username in users and users[username] == password:
+            session['username'] = username
+            return jsonify({'message': 'Login successful!'}), 200
+        return jsonify({'error': 'Invalid credentials!'}), 401
+    return render_template('login.html')
+
+@app.route('/special-feature', methods=['GET', 'POST'])
+def special_feature():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        phrase = request.form['phrase']
+        if phrase == SPECIAL_PHRASE:
+            return jsonify({'message': 'Access granted to the special feature!'}), 200
+        return jsonify({'error': 'Incorrect phrase!'}), 403
+    return render_template('special_feature.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return jsonify({'message': 'Logged out successfully!'}), 200
 
 @app.route('/api/market-data/<symbol>', methods=['GET'])
 def get_market_data(symbol):
@@ -199,4 +251,4 @@ def update_portfolio(trade):
     portfolio['total_value'] = sum(p['total_value'] for p in portfolio['positions'])
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)
