@@ -85,6 +85,19 @@ npm start
    - URL: [http://127.0.0.1:5000/special-feature](http://127.0.0.1:5000/special-feature)  
    - Description: After logging in, access this page to enter the special phrase (`TinkerQuest2025`) and unlock the special feature.
 
+## Special Phrase System
+
+1. **Registration**  
+   - During registration, a unique 4-word special phrase will be generated for you.
+   - Save this phrase securely as it will not be stored or shown again.
+
+2. **Login**  
+   - During login, you will need to provide your username, password, and the special phrase.
+   - If you lose your special phrase, you will not be able to log in.
+
+3. **Example Special Phrase**  
+   - Example: `alpha beta gamma delta`
+
 ## Project Structure
 
 ```
