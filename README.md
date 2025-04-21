@@ -117,6 +117,26 @@ algodex/
 └── README.md
 ```
 
+## Hosting on Netlify
+
+To host the frontend of AlgoDex on Netlify, follow these steps:
+
+1. Build the frontend:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+2. Log in to your Netlify account and create a new site.
+
+3. Drag and drop the `build` folder from the `frontend` directory into the Netlify dashboard.
+
+4. Configure the site settings:
+   - Set the build command to `npm run build`.
+   - Set the publish directory to `frontend/build`.
+
+5. Deploy the site and access it via the Netlify-provided URL.
+
 ## Contributing
 
 1. Fork the repository
