@@ -331,6 +331,25 @@ def save_strategy():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/add-funds', methods=['POST'])
+def add_funds():
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized access'}), 401
+
+    data = request.get_json()
+    amount = data.get('amount')
+
+    if not amount or float(amount) <= 0:
+        return jsonify({'error': 'Invalid amount'}), 400
+
+    # Add the funds to the user's account (in-memory example)
+    username = session['username']
+    if 'balance' not in users[username]:
+        users[username]['balance'] = 0
+    users[username]['balance'] += float(amount)
+
+    return jsonify({'success': True, 'balance': users[username]['balance']}), 200
+
 def update_portfolio(trade):
     # Find the position in the portfolio
     position = next((p for p in portfolio['positions'] if p['symbol'] == trade['symbol']), None)
