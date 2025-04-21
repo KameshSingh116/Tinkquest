@@ -196,9 +196,10 @@ def login():
         if username in users and users[username]['password'] == password:
             if users[username]['special_phrase'] == special_phrase:
                 session['username'] = username
-                return redirect(url_for('home'))  # Redirect to the main page
-            return jsonify({'error': 'Invalid special phrase!'}), 401
-        return jsonify({'error': 'Invalid credentials!'}), 401
+                # Redirect to the frontend dashboard after successful login
+                return redirect('http://127.0.0.1:3000/')  # Replace with your frontend URL
+            return render_template('login.html', error='Invalid special phrase!')
+        return render_template('login.html', error='Invalid credentials!')
     return render_template('login.html')
 
 @app.route('/special-feature', methods=['GET', 'POST'])

@@ -45,17 +45,26 @@
         button:hover {
             background-color: #5753c9;
         }
+        .error-message {
+            color: red;
+        }
     </style>
 </head>
 <body>
     <h1>Login</h1>
-    <form method="post">
+    {% if error %}
+        <p class="error-message">{{ error }}</p>
+    {% endif %}
+    <form method="post" action="{{ url_for('login') }}">
         <label>Username:</label>
         <input type="text" name="username" required>
+        <br>
         <label>Password:</label>
         <input type="password" name="password" required>
+        <br>
         <label>Special Phrase:</label>
         <input type="text" name="special_phrase" required>
+        <br>
         <button type="submit">Login</button>
     </form>
 </body>
